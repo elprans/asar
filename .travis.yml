@@ -1,11 +1,31 @@
 language: node_js
 node_js:
-  - "0.10"
-  - "0.12"
-  - "4"
-  - "5"
-
+- '0.10'
+- '0.12'
+- '4'
+- '5'
 notifications:
   email:
     on_success: never
     on_failure: change
+
+before_deploy:
+  - export _VER="${TRAVIS_TAG/#v/}"
+  - export _UPSTREAM_VER="${_VER/%-gentoo/}"
+  - export _SRC_DIR="$(pwd)"
+  - npm pack
+  - mkdir /tmp/asar-${_UPSTREAM_VER}
+  - cd /tmp/asar-${_UPSTREAM_VER} && npm install "${_SRC_DIR}/asar-${_UPSTREAM_VER}.tgz" && rm -f .bin
+  - cd /tmp && tar czf "${_SRC_DIR}/asar-build.tar.gz" asar-${_UPSTREAM_VER} && cd "${_SRC_DIR}"
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: E/9OwPn9LQrVZXy6KHnLk4FDLna7/kNNecxd4c5o2PX9wxqBcPTJWurzso6OWetOeY+RMLdxKr+9NMruVW2Bc6Jq3Velkk4E967BCQgba8YPZcKFQgl4jnvvwWlQOEZfauvL5cJSTIRAbAzCb0/r/G9tNN2OJ1Kd/HpeVgi9ll9MwSjxM1t4EnxuvDQpXYBjzE506Iutdslx4Vi0UWbvpjPq6pHdqYpB77vIvHYMiegXLMxAdk6X1++NR0h4VLYaCU7Psu/AwiE2vQ3QLCDvp26U0MRnytfmnvVM4YEYGgZ1vRgUi2hCqfHV2aBR79Ww/TEXrZeuShIuOLJt81B64au7H4/j+00D4GWpjd9UxSIgp2Z999oL1tDtIHBKpJSWfMRCB8/GmW+t5fLlLszerqfYrLgQqSFD4iKVg5YFYqhoQvivfVt9Ca2GvIuR4XGmXR0vYzx6TsEd59LcXrYEqJ+bRrH/LSUp+ydWMbfviKadq5azCBHv0dvirVDKvrFGuGRPjDYVdJ8YDNudtI/vWUOumbiVcjWW++7x3hNcGYgZuWAJXbcLlBf620gNOEPoujoAiaEtTVotICZYrreAMre+AeEOtEU/KVOP2+xFsWVWiv25jVOL6+4u/m6pEgF6m3lDAZGBFdBgyCXdpgiRjJG8Vg0HeA7QXWr3v5iFXyI=
+  file:
+    - asar-build.tar.gz
+  on:
+    tags: true
+    repo: elprans/asar
+    node: '5'
