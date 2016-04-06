@@ -7,6 +7,7 @@ node_js:
 branches:
   only:
   - master
+  - /^v\d+(\.\d+)*-gentoo$/
 
 install:
   - export DISPLAY=':99.0'
@@ -17,3 +18,24 @@ notifications:
   email:
     on_success: never
     on_failure: change
+
+before_deploy:
+  - export _VER="${TRAVIS_TAG/#v/}"
+  - export _UPSTREAM_VER="${_VER/%-gentoo/}"
+  - export _SRC_DIR="$(pwd)"
+  - npm pack
+  - mkdir /tmp/asar-${_UPSTREAM_VER}
+  - cd /tmp/asar-${_UPSTREAM_VER} && npm install "${_SRC_DIR}/asar-${_UPSTREAM_VER}.tgz" && rm -f .bin
+  - cd /tmp && tar czf "${_SRC_DIR}/asar-build.tar.gz" asar-${_UPSTREAM_VER} && cd "${_SRC_DIR}"
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: "Of5lAz7Gz+ne4HIUI61Ot+VVaOFLrtOBa28rZecouPBudCe8orOObnzBCgv+Fq/K3aU/O0A2ejkITnd+MI5HI4iz867vZg5+JvqLSpC55b8MZEUpEEvydRHGppTpwlNd4yGqHwNBBHf/TLDQ5OsezqwVEMXtb2TI/D4eDMpyVHa19zqYelLIUyp2YaI4ePNOF4bCwvB7n43I9Bo7ykVIt8DmA8PC4iNvP/Xc3xV/IIHUHjkbu4yxDQ6/Hnj3EW2yWLfur2k2r9bOpm0uUAHESiA8L0RzcfGXigijY8E3WIkpOj29R6vdjtSDLLM9TvOhiJOsFl+ZBv4kZB5g+Hypqx3oSfpxwEEevHz6CJ+lF9ypF6yeDEI3J04dOZmo1Ag0wfqJMw73ltyGaE2ouAM1w4fF5V7BYLxX37z1qSWtFzMJpSKe9zAAl4ExB5jTgvJeiEs05iJdVCoF7WEjiiQu6c8vTXCj8e0qiDAeOfrIGma3x7apgNETRgue3GNjbf6QSnvp1oHwaP7lSqIjvmU3vmJbUuGPyJP24qkr5mE3ca9fxuHs3qvw6KReZJYnTN7TxUL3elg/DsmV0xVI5EtTiqYojDF7rByfsucpm+ybnkGzMz6TGy1CnkkCxa/XtCKmJorvK8Yqq1Ms21TOwGaPyhgflH7KTkTiGKsO+uICLpE="
+  file:
+    - asar-build.tar.gz
+  on:
+    tags: true
+    repo: elprans/asar
+    node: '6'
